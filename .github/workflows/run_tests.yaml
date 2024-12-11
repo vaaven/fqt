@@ -27,5 +27,6 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test with pytest
       run: |
-        SCIPY_ARRAY_API=1
         pytest
+      env:
+        SCIPY_ARRAY_API: 1
