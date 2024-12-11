@@ -1,5 +1,6 @@
-numpy
+numpy>=2.2.0
 pytest
 scikit_learn>=1.5.2
 scipy
 torch
+array_api_compat
