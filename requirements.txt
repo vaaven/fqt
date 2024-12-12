@@ -1,6 +1,6 @@
 numpy>=1.19.5
 pytest
-scikit_learn>=1.5.2
+scikit_learn==1.5.2
 scipy>=1.6.0
 torch
 array_api_compat
