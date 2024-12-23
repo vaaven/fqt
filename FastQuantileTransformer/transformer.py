@@ -13,6 +13,9 @@ from FastQuantileTransformer.utils import resample
 
 from sklearn import set_config
 
+from typing import Literal, Optional
+
+
 class FastQuantileTransformer(QuantileTransformer):
     """Transform features using quantiles information.
 
@@ -126,8 +129,15 @@ class FastQuantileTransformer(QuantileTransformer):
     array([...])
     """
 
-    def __init__(self, array_api_dispatch = False, *args, **kwargs):
+    def __init__(
+            self,
+            array_api_dispatch: bool = False,
+            noise_policy: Optional[Literal['uniform']] = None,
+            *args,
+            **kwargs
+    ):
         super().__init__(*args, **kwargs)
+        self.noise_policy = noise_policy
         set_config(array_api_dispatch=array_api_dispatch)
 
     def _dense_fit(self, X, random_state):
@@ -138,11 +148,17 @@ class FastQuantileTransformer(QuantileTransformer):
         X : ndarray of shape (n_samples, n_features)
             The data used to scale along the features axis.
         """
+        xp, _, device_ = get_namespace_and_device(X)
+
         if self.ignore_implicit_zeros:
             warnings.warn(
                 "'ignore_implicit_zeros' takes effect only with"
                 " sparse matrix. This parameter has no effect."
             )
+
+        if self.noise_policy == 'uniform':
+            random_state = check_random_state(random_state)
+            X += xp.asarray(random_state.normal(0.0, 1e-5, X.shape), dtype=X.dtype, device=device_)
 
         n_samples, n_features = X.shape
         if self.subsample is not None and self.subsample < n_samples:
@@ -150,8 +166,6 @@ class FastQuantileTransformer(QuantileTransformer):
             X = resample(
                 X, n_samples=self.subsample, random_state=random_state
             )
-
-        xp, _ = get_namespace(X)
 
         self.quantiles_ = xp.nanquantile(X, self.references_, axis=0)
 
@@ -173,7 +187,7 @@ class FastQuantileTransformer(QuantileTransformer):
         Returns
         -------
         self : object
-           Fitted transformer.
+           Fitted tr ansformer.
         """
         xp, _, device_ = get_namespace_and_device(X)
 
@@ -200,19 +214,25 @@ class FastQuantileTransformer(QuantileTransformer):
         # Create the quantiles of reference
         self.references_ = xp.linspace(0, 1, self.n_quantiles_, endpoint=True, dtype=X.dtype, device=device_)
         if sparse.issparse(X):
+            if self.noise_policy is not None:
+                warnings.warn(
+                    "'noise_policy' takes no effect with"
+                    " sparse matrix. It's ignored due to sparce property."
+                    " Consider making preprocess by yourself or using dense data type."
+                )
             self._sparse_fit(X, rng)
         else:
             self._dense_fit(X, rng)
 
         return self
 
-    def _interp(self, X, XP, FP):
-        xp, _ = get_namespace(X)
+    def _interp(self, x, Xp, fp):
+        xp, _ = get_namespace(x)
 
         if xp.__name__ in {"torch", "array_api_compat.torch"}:
-            return interpolate_torch(XP, FP, X)
+            return interpolate_torch(x, Xp, fp)
         else:
-            return np.interp(X, XP, FP)
+            return np.interp(x, Xp, fp)
 
     def _transform_col(self, X_col, quantiles, inverse):
         """Private function to transform a single feature."""

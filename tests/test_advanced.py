@@ -9,6 +9,7 @@ n_samples = 10000
 n_features = 10
 ROUNDS = 5
 
+
 def test_basic():
     tch = torch.ones(n_samples, n_features)
     transformer = FastQuantileTransformer(array_api_dispatch=False).fit(tch)
@@ -18,6 +19,7 @@ def test_basic():
     result = transformer.transform(tch)
     assert type(result) == torch.Tensor
 
+
 def test_inplace():
     for _ in range(ROUNDS):
         tch = torch.rand(n_samples, n_features)
@@ -26,12 +28,14 @@ def test_inplace():
         result = transformer.transform(tch)
         assert (tch == tch_clone).all()
 
+
 def test_inverse():
     for _ in range(ROUNDS):
         tch = torch.rand(n_samples, n_features)
         transformer = FastQuantileTransformer(array_api_dispatch=True).fit(tch)
         result = transformer.transform(tch)
         assert torch.allclose(tch, transformer.inverse_transform(result), atol=1e-5)
+
 
 def test_subsample():
     n_samples = 1000000
@@ -50,6 +54,13 @@ def test_subsample():
         inf_norm = np.max(np.abs(diff))
         assert inf_norm < 1e-2
         inf_norm_arr.append(inf_norm)
-    # each random subsampling yield a unique approximation to the expected
-    # linspace CDF
     assert len(np.unique(inf_norm_arr)) == len(inf_norm_arr)
+
+def test_noise_policy_basic():
+    tch = torch.ones(n_samples, n_features)
+    transformer = FastQuantileTransformer(array_api_dispatch=False, noise_policy='uniform').fit(tch)
+    result = transformer.transform(tch)
+    assert type(result) == numpy.ndarray
+    transformer = FastQuantileTransformer(array_api_dispatch=True, noise_policy='uniform').fit(tch)
+    result = transformer.transform(tch)
+    assert type(result) == torch.Tensor
