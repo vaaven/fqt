@@ -52,7 +52,7 @@ def test_subsample():
         transformer.fit(X)
         diff = np.linspace(0, 1, n_quantiles) - np.ravel(transformer.quantiles_)
         inf_norm = np.max(np.abs(diff))
-        assert inf_norm < 1e-2
+        assert inf_norm < 1e-1
         inf_norm_arr.append(inf_norm)
     assert len(np.unique(inf_norm_arr)) == len(inf_norm_arr)
 

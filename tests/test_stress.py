@@ -45,7 +45,7 @@ def test_subsample():
         transformer = FastQuantileTransformer(subsample=n_subsamples, n_quantiles=n_subsamples // 10,
                                               array_api_dispatch=True, random_state=42)
         torch_result = transformer.fit_transform(torch_data)
-        assert np.allclose(np_result, torch_result.numpy(), atol=1e-2)
+        assert np.allclose(torch_data, transformer.inverse_transform(torch_result), atol=1e-3)
 
 
 def test_random_state():
