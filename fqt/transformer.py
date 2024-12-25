@@ -8,8 +8,8 @@ import numpy as np
 from scipy import sparse, stats
 from sklearn.preprocessing._data import BOUNDS_THRESHOLD
 
-from fast_qt.interpolate import interpolate_torch
-from fast_qt.utils import resample
+from fqt.interpolate import interpolate_torch
+from fqt.utils import resample
 
 from sklearn import set_config
 

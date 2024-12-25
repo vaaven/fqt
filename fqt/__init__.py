@@ -1,0 +1,1 @@
+from fqt.transformer import FastQuantileTransformer

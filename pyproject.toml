@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fqt"
+version = "0.0.1.dev0"
+license = { file = "LICENSE" }
+readme = "README.md"
+# repository = "https://github.com/"
+dependencies = [
+    "scikit_learn>=1.5.2",
+    "torch"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.2.4"
+]
