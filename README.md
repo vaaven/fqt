@@ -1,6 +1,8 @@
 
 # Fast Quantile Transformer
 
+[![PyPI - Version](https://img.shields.io/pypi/v/fqt.svg)](https://pypi.org/project/fqt)
+
 Improved version of Quantile Transfomer from scikit-learn package which provides ability to work with torch tensors on CUDA and other minor improvements.
 
 ## Documentation
