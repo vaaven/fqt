@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers and Nikita Lazarev
+# SPDX-License-Identifier: BSD-3-Clause
+
 import torch
 import warnings
 from sklearn.utils import _array_api
