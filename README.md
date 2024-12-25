@@ -26,12 +26,11 @@ However, if array_like is set True, then transformer will work with object in th
 torch.Tensor
 ```
 > [!NOTE]
-> Currently, due to unavailability of quantile function at array api standart, it is guaranted to work properly only with numpy, scipy and torch.
+> Due to unavailability of quantile function at array api standart, it is guaranted to work properly only with numpy, scipy and torch.
 
 *  `replace_subsamples: bool, default is True`, specify the policy of samping subsample for quantile selection. If set to True, some objects may occur multiple times in subsample. Otherwise, if set to False, one object may occur only one time in subsample.  
-***QuantileTrensformer from sklearn by default follows array_api_dispatch=False strategy***. 
 
-However, it seems overkilling, because it makes noticable effect only when subsample almost equal n_samples, but takes a lot of time (check _Benchmark_ section). 
+***QuantileTrensformer from sklearn by default follows array_api_dispatch=False strategy***. However, it seems overkilling, because it makes noticable effect only when subsample almost equal n_samples, but takes a lot of time (check _Benchmark_ section). 
 
 - `noise_distribution: Optional[Literal['uniform']], default is None`, describes the noise property that is added to the data: 
     - `normal` is normal distribution with `loc=0.0, scale=1e-5`
