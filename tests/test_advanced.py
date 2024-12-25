@@ -58,9 +58,9 @@ def test_subsample():
 
 def test_noise_policy_basic():
     tch = torch.ones(n_samples, n_features)
-    transformer = FastQuantileTransformer(array_api_dispatch=False, noise_policy='uniform').fit(tch)
+    transformer = FastQuantileTransformer(array_api_dispatch=False, noise_distribution='uniform').fit(tch)
     result = transformer.transform(tch)
     assert type(result) == numpy.ndarray
-    transformer = FastQuantileTransformer(array_api_dispatch=True, noise_policy='uniform').fit(tch)
+    transformer = FastQuantileTransformer(array_api_dispatch=True, noise_distribution='uniform').fit(tch)
     result = transformer.transform(tch)
     assert type(result) == torch.Tensor
