@@ -1,4 +1,8 @@
 
+# Fast Quantile Transformer
+
+Improved version of Quantile Transfomer from scikit-learn package which provides ability to work with torch tensors on CUDA and other minor improvements.
+
 ## Documentation
 
 Current version provides same features as the original one, but also three more atributes which are ``` array_api_dispatch, replace_subsamples, noise_policy ```.
@@ -18,7 +22,7 @@ However, if array_like is set True, then transformer will work with object in th
 >>> type(FastQuantileTransformer(array_api_dispatch=True).fit_transform(a))
 torch.Tensor
 ```
-> [!NOTE]
+> [!WARNING]
 > Currently, due to unavailability of quantile function at array api standart, it is guaranted to work properly only with numpy, scipy and torch.
 
 *  `replace_subsamples: bool, default is True`, specify the policy of samping subsample for quantile selection. If set to True, some objects may occur multiple times in subsample. Otherwise, if set to False, one object may occur only one time in subsample.  
@@ -35,3 +39,8 @@ Quantile transform from sklearn performs interpolations among quantiles twice du
 
 By paying attention to the description of the parameters you can note that `FastQuantileTransformer(replace_subsamples=False)` is absolutely the same as `QuantileTrensformer()`
 
+
+
+## Benchmarks
+
+**TODO**

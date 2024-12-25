@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fqt"
+description = "Fast Quantile Transformer"
 version = "0.0.1.dev0"
 license = { file = "LICENSE" }
 readme = "README.md"
