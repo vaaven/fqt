@@ -132,13 +132,13 @@ class FastQuantileTransformer(QuantileTransformer):
     def __init__(
             self,
             array_api_dispatch: bool = False,
-            noise_policy: Optional[Literal['uniform']] = None,
+            noise_distribution: Optional[Literal['uniform', 'normal']] = None,
             replace_subsamples: bool = True,
             *args,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.noise_policy = noise_policy
+        self.noise_distribution = noise_distribution
         self.replace_subsamples = replace_subsamples
         set_config(array_api_dispatch=array_api_dispatch)
 
@@ -158,9 +158,12 @@ class FastQuantileTransformer(QuantileTransformer):
                 " sparse matrix. This parameter has no effect."
             )
 
-        if self.noise_policy == 'uniform':
-            random_state = check_random_state(random_state)
+        random_state = check_random_state(random_state)
+
+        if self.noise_distribution == 'normal':
             X += xp.asarray(random_state.normal(0.0, 1e-5, X.shape), dtype=X.dtype, device=device_)
+        elif self.noise_distribution == 'uniform':
+            X += xp.asarray(random_state.uniform(-1e-5, 1e-5, X.shape), dtype=X.dtype, device=device_)
 
         n_samples, n_features = X.shape
         if self.subsample is not None and self.subsample < n_samples:
@@ -216,9 +219,9 @@ class FastQuantileTransformer(QuantileTransformer):
         # Create the quantiles of reference
         self.references_ = xp.linspace(0, 1, self.n_quantiles_, endpoint=True, dtype=X.dtype, device=device_)
         if sparse.issparse(X):
-            if self.noise_policy is not None:
+            if self.noise_distribution is not None:
                 warnings.warn(
-                    "'noise_policy' takes no effect with"
+                    "'noise_distribution' takes no effect with"
                     " sparse matrix. It's ignored due to sparce property."
                     " Consider making preprocess by yourself or using dense data type."
                 )
@@ -229,10 +232,13 @@ class FastQuantileTransformer(QuantileTransformer):
         return self
     
     def _interp(self, x, Xp, fp):
-        xp, _ = get_namespace(x)
+        xp, _, device_ = get_namespace_and_device(x)
 
         if xp.__name__ in {"torch", "array_api_compat.torch"}:
-            return interpolate_torch(x, Xp, fp)
+            if str(device_) == 'cpu':
+                return torch.tensor(np.interp(x, Xp, fp), dtype=x.dtype, device=device_)
+            else:
+                return interpolate_torch(x, Xp, fp)
         else:
             return np.interp(x, Xp, fp)
 
@@ -273,7 +279,7 @@ class FastQuantileTransformer(QuantileTransformer):
         isfinite_mask = ~xp.isnan(X_col)
         X_col_finite = X_col[isfinite_mask]
         if not inverse:
-            if self.noise_policy is None:
+            if self.noise_distribution is None:
                 # Interpolate in one direction and in the other and take the
                 # mean. This is in case of repeated values in the features
                 # and hence repeated quantiles
