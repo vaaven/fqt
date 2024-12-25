@@ -7,7 +7,7 @@ name = "fqt"
 version = "0.0.1.dev0"
 license = { file = "LICENSE" }
 readme = "README.md"
-# repository = "https://github.com/"
+repository = "https://github.com/vaaven/fqt/"
 dependencies = [
     "scikit_learn>=1.5.2",
     "torch"
