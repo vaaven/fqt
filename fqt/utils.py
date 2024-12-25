@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers and Nikita Lazarev
+# SPDX-License-Identifier: BSD-3-Clause
+
 from sklearn.utils.validation import check_consistent_length, check_random_state
 from sklearn.utils._indexing import _safe_indexing
 from sklearn.utils._array_api import get_namespace_and_device

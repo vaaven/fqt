@@ -3,6 +3,8 @@
 
 [![PyPI - Version](https://img.shields.io/pypi/v/fqt.svg)](https://pypi.org/project/fqt)
 
+Most of the code from this project was taken and modified from scikit-learn package. Credits to [sklearn](https://github.com/scikit-learn/scikit-learn).
+
 Improved version of Quantile Transfomer from scikit-learn package which provides ability to work with torch tensors on CUDA and other minor improvements.
 
 ## Documentation
