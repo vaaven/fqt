@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 from sklearn.preprocessing import QuantileTransformer
 import random
+import sklearn
 
 from .context import *
 
@@ -17,8 +18,9 @@ def test_basic_uniform():
         np_data = rng.rand(n_samples, n_features)
         np_result = QuantileTransformer(random_state=42).fit_transform(np_data)
         torch_data = torch.asarray(np_data)
-        transformer = FastQuantileTransformer(array_api_dispatch=True, random_state=42)
-        torch_result = transformer.fit_transform(torch_data)
+        with sklearn.config_context(array_api_dispatch=True):
+            transformer = FastQuantileTransformer(random_state=42)
+            torch_result = transformer.fit_transform(torch_data)
         assert np.allclose(np_result, torch_result.numpy())
         assert np.allclose(np_data, transformer.inverse_transform(torch_result), atol=1e-3)
 
@@ -28,8 +30,9 @@ def test_basic_normal():
         np_data = rng.rand(n_samples, n_features)
         np_result = QuantileTransformer(output_distribution='normal', random_state=42).fit_transform(np_data)
         torch_data = torch.asarray(np_data)
-        transformer = FastQuantileTransformer(array_api_dispatch=True, output_distribution='normal', random_state=42)
-        torch_result = transformer.fit_transform(torch_data)
+        with sklearn.config_context(array_api_dispatch=True):
+            transformer = FastQuantileTransformer(output_distribution='normal', random_state=42)
+            torch_result = transformer.fit_transform(torch_data)
         assert np.allclose(np_result, torch_result.numpy())
         assert np.allclose(np_data, transformer.inverse_transform(torch_result), atol=1e-3)
 
@@ -42,10 +45,10 @@ def test_subsample():
         np_result = QuantileTransformer(subsample=n_subsamples, n_quantiles=n_subsamples // 10,
                                         random_state=42).fit_transform(np_data)
         torch_data = torch.asarray(np_data)
-        transformer = FastQuantileTransformer(subsample=n_subsamples, n_quantiles=n_subsamples // 10,
-                                              array_api_dispatch=True, random_state=42)
-        torch_result = transformer.fit_transform(torch_data)
-        assert np.allclose(torch_data, transformer.inverse_transform(torch_result), atol=1e-3)
+        with sklearn.config_context(array_api_dispatch=True):
+            transformer = FastQuantileTransformer(subsample=n_subsamples, n_quantiles=n_subsamples // 10, random_state=42)
+            torch_result = transformer.fit_transform(torch_data)
+            assert np.allclose(torch_data, transformer.inverse_transform(torch_result), atol=1e-3)
 
 
 def test_random_state():
@@ -54,9 +57,10 @@ def test_random_state():
         torch_data = torch.asarray(np_data)
         true_result = None
         for __ in range(100):
-            transformer = FastQuantileTransformer(array_api_dispatch=True, output_distribution='normal',
-                                                  random_state=42, n_quantiles=2, subsample=100)
-            torch_result = transformer.fit_transform(torch_data)
+            with sklearn.config_context(array_api_dispatch=True):
+                transformer = FastQuantileTransformer(output_distribution='normal',
+                                                    random_state=42, n_quantiles=2, subsample=100)
+                torch_result = transformer.fit_transform(torch_data)
             if true_result is None:
                 true_result = torch_result
             assert torch.allclose(torch_result, true_result)
