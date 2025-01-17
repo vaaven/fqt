@@ -4,6 +4,7 @@
 import torch
 import warnings
 from sklearn.utils import _array_api
+from sklearn.utils.validation import validate_data
 from sklearn.utils._array_api import get_namespace, get_namespace_and_device
 from sklearn.preprocessing import QuantileTransformer
 from sklearn.utils.validation import check_random_state
@@ -134,16 +135,16 @@ class FastQuantileTransformer(QuantileTransformer):
 
     def __init__(
             self,
-            array_api_dispatch: bool = False,
-            noise_distribution: Optional[Literal['uniform', 'normal']] = None,
+            noise_distribution: Optional[Literal['uniform', 'normal', 'deterministic']] = None,
             replace_subsamples: bool = True,
+            epsilon = 1e-5,
             *args,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.noise_distribution = noise_distribution
         self.replace_subsamples = replace_subsamples
-        set_config(array_api_dispatch=array_api_dispatch)
+        self.epsilon = epsilon
 
     def _dense_fit(self, X, random_state):
         """Compute percentiles for dense matrices.
@@ -164,9 +165,9 @@ class FastQuantileTransformer(QuantileTransformer):
         random_state = check_random_state(random_state)
 
         if self.noise_distribution == 'normal':
-            X += xp.asarray(random_state.normal(0.0, 1e-5, X.shape), dtype=X.dtype, device=device_)
+            X += xp.asarray(random_state.normal(0.0, self.epsilon, X.shape), dtype=X.dtype, device=device_)
         elif self.noise_distribution == 'uniform':
-            X += xp.asarray(random_state.uniform(-1e-5, 1e-5, X.shape), dtype=X.dtype, device=device_)
+            X += xp.asarray(random_state.uniform(-self.epsilon, self.epsilon, X.shape), dtype=X.dtype, device=device_)
 
         n_samples, n_features = X.shape
         if self.subsample is not None and self.subsample < n_samples:
@@ -282,7 +283,7 @@ class FastQuantileTransformer(QuantileTransformer):
         isfinite_mask = ~xp.isnan(X_col)
         X_col_finite = X_col[isfinite_mask]
         if not inverse:
-            if self.noise_distribution is None:
+            if self.noise_distribution in {None, 'deterministic'}:
                 # Interpolate in one direction and in the other and take the
                 # mean. This is in case of repeated values in the features
                 # and hence repeated quantiles
@@ -299,8 +300,9 @@ class FastQuantileTransformer(QuantileTransformer):
         else:
             X_col[isfinite_mask] = self._interp(X_col_finite, self.references_, quantiles)
 
-        X_col[upper_bounds_idx] = upper_bound_y
-        X_col[lower_bounds_idx] = lower_bound_y
+        if self.noise_distribution != 'deterministic': 
+            X_col[upper_bounds_idx] = upper_bound_y
+            X_col[lower_bounds_idx] = lower_bound_y
         # for forward transform, match the output distribution
         if not inverse:
             with np.errstate(invalid="ignore"):  # hide NaN comparison warnings
@@ -324,7 +326,8 @@ class FastQuantileTransformer(QuantileTransformer):
         """Check inputs before fit and transform."""
         xp, _ = _array_api.get_namespace(X)
 
-        X = self._validate_data(  # 1.5.2 legacy, 1.6.X has global validate_data method with array api
+        X = validate_data(
+            self,
             X,
             reset=in_fit,
             accept_sparse="csc",
@@ -333,7 +336,7 @@ class FastQuantileTransformer(QuantileTransformer):
             # only set force_writeable for the validation at transform time because
             # it's the only place where QuantileTransformer performs inplace operations.
             force_writeable=True if not in_fit else None,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
@@ -354,3 +357,33 @@ class FastQuantileTransformer(QuantileTransformer):
         tags.input_tags.allow_nan = True
         tags.array_api_support = True
         return tags
+
+def fast_quantile_transform(X,
+    *,
+    axis=0,
+    n_quantiles=1000,
+    output_distribution="uniform",
+    ignore_implicit_zeros=False,
+    subsample=int(1e5),
+    random_state=None,
+    copy=True,
+    noise_distrubition=None,
+    replace_subsample=True,
+    epsilon=1e-5,
+):
+    n = FastQuantileTransformer(
+        n_quantiles=n_quantiles,
+        output_distribution=output_distribution,
+        subsample=subsample,
+        ignore_implicit_zeros=ignore_implicit_zeros,
+        random_state=random_state,
+        copy=copy,
+        noise_distribution=noise_distrubition,
+        replace_subsamples=replace_subsample,
+        epsilon=epsilon
+    )
+    if axis == 0:
+        X = n.fit_transform(X)
+    else:  # axis == 1
+        X = n.fit_transform(X.T).T
+    return X
