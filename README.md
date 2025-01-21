@@ -52,10 +52,12 @@ Quantile transform from sklearn performs interpolations among quantiles twice du
 
 ## Benchmarks
 
-All the tests are performed with array of 1000000 samples and 100 features. For more details please pay attention to examples/benchmark.ipynb
+All the tests are performed with array of 1000000 samples and 100 features. For more details please pay attention to examples/benchmarks.ipynb
+
+All the tests are performed using kaggle settings with single GPU T4.
 
 | attributes\transformer       | sklearn | fqt numpy | fqt torch | fqt torch + cuda |
 |------------------------------|---------|-----------|-----------|------------------|
-| `standard`                   | 22.3    | 22.2      | 22.3      | ?                |
-| `subsamples=100000`          | 23.1    | 23.0      | 23.2      | ?                |
-|`noise_distribution='uniform'`| -       | 14.5      | 14.6      | ?                |
+| `standard`                   | 22.3s   | 22.2s     | 22.3s     | 3.7s             |
+| `subsamples=100000`          | 23.1s   | 23.0s     | 23.2s     | 3.7s             |
+|`noise_distribution='uniform'`| -       | 14.5s     | 14.6s     | 4.7s             |

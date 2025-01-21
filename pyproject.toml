@@ -5,13 +5,15 @@ build-backend = "hatchling.build"
 [project]
 name = "fqt"
 description = "Fast Quantile Transformer"
-version = "0.0.1.dev0"
+version = "0.0.3.dev0"
 license = { file = "LICENSE" }
 readme = "README.md"
 # repository = "https://github.com/vaaven/fqt/"
 dependencies = [
-    "scikit_learn>=1.5.2",
-    "torch"
+    "scikit_learn>=1.6.2",
+    "torch",
+    "scipy>=1.14.0",
+    "array_api_compat"
 ]
 
 [project.optional-dependencies]
