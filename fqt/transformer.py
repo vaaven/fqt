@@ -198,8 +198,6 @@ class FastQuantileTransformer(QuantileTransformer):
         self : object
            Fitted tr ansformer.
         """
-        xp, _, device_ = get_namespace_and_device(X)
-
         if self.subsample is not None and self.n_quantiles > self.subsample:
             raise ValueError(
                 "The number of quantiles cannot be greater than"
@@ -208,6 +206,7 @@ class FastQuantileTransformer(QuantileTransformer):
             )
 
         X = self._check_inputs(X, in_fit=True, copy=False)
+        xp, _, device_ = get_namespace_and_device(X)
         n_samples = X.shape[0]
 
         if self.n_quantiles > n_samples:
@@ -324,8 +323,9 @@ class FastQuantileTransformer(QuantileTransformer):
 
     def _check_inputs(self, X, in_fit, accept_sparse_negative=False, copy=False):
         """Check inputs before fit and transform."""
-        xp, _ = _array_api.get_namespace(X)
-
+        xp, _, device_ = get_namespace_and_device(X)
+        if str(device_) != 'cpu' and device_ != None:
+            X = X.cpu()
         X = validate_data(
             self,
             X,
@@ -338,6 +338,8 @@ class FastQuantileTransformer(QuantileTransformer):
             force_writeable=True if not in_fit else None,
             ensure_all_finite="allow-nan",
         )
+        if xp.__name__ in {"torch", "array_api_compat.torch"}:
+            X = X.to(device_)
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
         with np.errstate(invalid="ignore"):  # hide NaN comparison warnings TODO: fix
